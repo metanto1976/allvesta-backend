@@ -5,9 +5,11 @@ import os
 
 app = Flask(__name__)
 
-# Enable CORS for all origins
-CORS(app, resources={r"/chat": {"origins": "*"}})
-CORS(app, resources={r"/health": {"origins": "*"}})
+# Better CORS configuration
+CORS(app, 
+     origins=["*"],
+     methods=["GET", "POST", "OPTIONS"],
+     allow_headers=["Content-Type"])
 
 def init_gemini(api_key):
     genai.configure(api_key=api_key)
@@ -42,7 +44,7 @@ def chat():
 
         model = genai.GenerativeModel('gemini-2.0-flash')
 
-        system_prompt = """You are AllVesta's Customer Agent. Have a warm, natural conversation about investing.
+        system_prompt = """You are AllVesta''s Customer Agent. Have a warm, natural conversation about investing.
 
 Your goals:
 - Understand their experience, knowledge, confidence, risk tolerance, readiness
@@ -73,15 +75,14 @@ Keep responses conversational (1-2 sentences)."""
 
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({"status": "ok"})
+    return jsonify({"status": "ok", "message": "Backend is running"})
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     api_key = os.getenv('GEMINI_API_KEY')
     if not api_key:
         print("ERROR: GEMINI_API_KEY environment variable not set")
         exit(1)
 
     init_gemini(api_key)
-    print("🚀 AllVesta backend running on http://localhost:5000")
-    print("CORS enabled for all origins")
-    app.run(debug=True, port=5000)
+    port = int(os.getenv("PORT", 10000))
+    app.run(host="0.0.0.0", port=port, debug=False)
